@@ -6,34 +6,26 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.TextView;
 
-/**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- */
+import java.text.MessageFormat;
+import java.util.Calendar;
+
 public class FullscreenActivity extends AppCompatActivity {
-    /**
-     * Whether or not the system UI should be auto-hidden after
-     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-     */
+
     private static final boolean AUTO_HIDE = true;
 
-    /**
-     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
-     * user interaction before hiding the system UI.
-     */
     private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
 
-    /**
-     * Some older devices needs a small delay between UI widget updates
-     * and a change of the status and navigation bar.
-     */
     private static final int UI_ANIMATION_DELAY = 300;
     private final Handler mHideHandler = new Handler();
-    private View mContentView;
+    private TextView clockTextView;
+    private CountDownTimer minMoClock;
+
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
@@ -43,7 +35,7 @@ public class FullscreenActivity extends AppCompatActivity {
             // Note that some of these constants are new as of API 16 (Jelly Bean)
             // and API 19 (KitKat). It is safe to use them, as they are inlined
             // at compile-time and do nothing on earlier devices.
-            mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+            clockTextView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
                     | View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -70,11 +62,6 @@ public class FullscreenActivity extends AppCompatActivity {
             hide();
         }
     };
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
     private final View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -93,11 +80,11 @@ public class FullscreenActivity extends AppCompatActivity {
 
         mVisible = true;
         mControlsView = findViewById(R.id.fullscreen_content_controls);
-        mContentView = findViewById(R.id.fullscreen_content);
+        clockTextView = findViewById(R.id.tv_clock_time);
 
 
         // Set up the user interaction to manually show or hide the system UI.
-        mContentView.setOnClickListener(new View.OnClickListener() {
+        clockTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 toggle();
@@ -108,6 +95,40 @@ public class FullscreenActivity extends AppCompatActivity {
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
         findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+
+        if(minMoClock == null){
+            minMoClock = createMinMoClock();
+        }
+
+
+        minMoClock.start();
+    }
+
+
+    public CountDownTimer createMinMoClock(){
+        return new CountDownTimer(1000 * 60 * 60 , 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                Calendar calendar = Calendar.getInstance();
+                String hour = String.valueOf(calendar.get(Calendar.HOUR));
+
+                String minute = String.valueOf(calendar.get(Calendar.MINUTE));
+
+                if( calendar.get(Calendar.MINUTE) < 10){
+                    minute = "0" +calendar.get(Calendar.MINUTE);
+                }
+
+                String second = String.valueOf(calendar.get(Calendar.SECOND));
+                if( calendar.get(Calendar.SECOND) < 10){
+                    second = "0" +calendar.get(Calendar.SECOND);
+                }
+
+                clockTextView.setText(MessageFormat.format("{0}:{1}:{2}", hour, minute, second));
+            }
+            public void onFinish() {
+                this.start();
+            }
+        };
     }
 
     @Override
@@ -145,7 +166,7 @@ public class FullscreenActivity extends AppCompatActivity {
     @SuppressLint("InlinedApi")
     private void show() {
         // Show the system bar
-        mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        clockTextView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         mVisible = true;
 
